@@ -62,13 +62,15 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
       {/* Text info */}
       <div className="pt-3 pb-1">
         <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 mb-1">
-          {product.category ?? 'Sản phẩm'}
+          {typeof product.category === 'object' && product.category !== null
+            ? (product.category as { name: string }).name
+            : (product.category as string) ?? 'Sản phẩm'}
         </p>
         <h3 className="text-sm font-medium text-neutral-900 line-clamp-1 leading-snug">
           {product.name}
         </h3>
         <p className="mt-1.5 text-sm font-bold text-neutral-900">
-          ₫{product.price.toLocaleString('vi-VN')}
+          ₫{(product.price ?? 0).toLocaleString('vi-VN')}
         </p>
       </div>
     </article>
