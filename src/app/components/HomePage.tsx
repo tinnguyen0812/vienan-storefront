@@ -73,11 +73,21 @@ export function HomePage({ onProductClick, onGoToCart, cartItemCount }: HomePage
   }, [categories]);
 
   const normalizedProducts = useMemo(() => {
-    return products.map((product) => ({
-      ...product,
-      image: product.image ?? product.images?.[0] ?? '',
-      category: product.category ?? categoryMap.get(product.categoryId) ?? 'Sản phẩm',
-    }));
+    return products.map((product) => {
+      // API trả về category là object { id, name, slug } — extract name
+      const rawCat = product.category as unknown;
+      const categoryName =
+        rawCat && typeof rawCat === 'object'
+          ? (rawCat as { name: string }).name
+          : typeof rawCat === 'string' && rawCat
+            ? rawCat
+            : categoryMap.get(product.categoryId ?? '') ?? 'Sản phẩm';
+      return {
+        ...product,
+        image: product.image ?? product.images?.[0] ?? '',
+        category: categoryName,  // always string after normalization
+      };
+    });
   }, [products, categoryMap]);
 
   const filteredProducts = useMemo(() => {

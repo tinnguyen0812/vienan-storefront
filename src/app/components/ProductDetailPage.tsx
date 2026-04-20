@@ -281,7 +281,11 @@ export function ProductDetailPage({
         <div className="lg:sticky lg:top-16 lg:self-start lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto">
           <div className="px-8 py-10 space-y-8">
             <div>
-              <p className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 mb-3">{product.category}</p>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 mb-3">
+                {typeof product.category === 'object' && product.category !== null
+                  ? (product.category as { name: string }).name
+                  : (product.category as string) ?? 'Sản phẩm'}
+              </p>
               <h1 className="text-2xl font-black uppercase tracking-tighter text-neutral-900 leading-tight mb-4">
                 {product.name}
               </h1>
@@ -461,9 +465,13 @@ export function ProductDetailPage({
                   />
                 </div>
                 <div className="pt-3">
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 mb-1">{p.category}</p>
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-neutral-400 mb-1">
+                    {typeof p.category === 'object' && p.category !== null
+                      ? (p.category as { name: string }).name
+                      : (p.category as string) ?? 'Sản phẩm'}
+                  </p>
                   <h3 className="text-sm font-medium text-neutral-900 line-clamp-1">{p.name}</h3>
-                  <p className="mt-1.5 text-sm font-bold text-neutral-900">₫{p.price.toLocaleString('vi-VN')}</p>
+                  <p className="mt-1.5 text-sm font-bold text-neutral-900">₫{(p.price ?? 0).toLocaleString('vi-VN')}</p>
                 </div>
               </article>
             ))}
