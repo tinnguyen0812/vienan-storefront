@@ -169,7 +169,7 @@ export function ProductDetailPage({
   const shopeeUrl = product.shopeeUrl ?? product.shopee_link ?? SHOPEE_GLOBAL;
 
   const colorOptions = useMemo(() => {
-    const byColor = new Map<string, { color: string; colorCode?: string; inStock: boolean }>();
+    const byColor = new Map<string, { color: string; colorCode?: string; imageUrl?: string; inStock: boolean }>();
     variants.forEach((variant) => {
       const existing = byColor.get(variant.color);
       const inStock = variant.stock > 0;
@@ -177,14 +177,31 @@ export function ProductDetailPage({
         byColor.set(variant.color, {
           color: variant.color,
           colorCode: variant.colorCode,
+          imageUrl: variant.imageUrl ?? undefined,
           inStock,
         });
-      } else if (inStock) {
-        byColor.set(variant.color, { ...existing, inStock: true });
+      } else {
+        byColor.set(variant.color, {
+          ...existing,
+          // Ưu tiên lấy imageUrl nếu chưa có
+          imageUrl: existing.imageUrl ?? variant.imageUrl ?? undefined,
+          inStock: existing.inStock || inStock,
+        });
       }
     });
     return Array.from(byColor.values());
   }, [variants]);
+
+  /** Ảnh hiển thị: ảnh variant của màu đang chọn (nếu có) + gallery gốc */
+  const displayImages = useMemo(() => {
+    if (!selectedColor) return product.images;
+    const colorDef = colorOptions.find((c) => c.color === selectedColor);
+    const variantImg = colorDef?.imageUrl;
+    if (!variantImg) return product.images;
+    // Đặt ảnh variant lên đầu, bỏ duplicate nếu trùng với product.images[0]
+    const rest = product.images.filter((src) => src !== variantImg);
+    return [variantImg, ...rest];
+  }, [selectedColor, colorOptions, product.images]);
 
   const sizesForSelectedColor = useMemo(() => {
     if (!selectedColor) return new Set<string>();
@@ -266,8 +283,8 @@ export function ProductDetailPage({
 
       <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-[3fr_2fr]">
         <div className="bg-neutral-100 space-y-px">
-          {product.images.map((src, i) => (
-            <div key={i} style={{ aspectRatio: '3 / 4' }}>
+          {displayImages.map((src, i) => (
+            <div key={`${src}-${i}`} style={{ aspectRatio: '3 / 4' }}>
               <img
                 src={src}
                 alt={i === 0 ? product.name : `${product.name} goc ${i + 1}`}
