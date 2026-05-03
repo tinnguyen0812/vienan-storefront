@@ -147,6 +147,7 @@ export function ProductDetailPage({
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -224,12 +225,31 @@ export function ProductDetailPage({
   const handleColorSelect = (color: string, inStock: boolean) => {
     if (!inStock) return;
     setSelectedColor(color);
+    setValidationError(null);
     if (selectedSize && !variants.some((v) => v.color === color && v.size === selectedSize && v.stock > 0)) {
       setSelectedSize(null);
     }
   };
 
+  const handleSizeSelect = (size: string, isOutOfStock: boolean) => {
+    if (isOutOfStock) return;
+    setSelectedSize(size);
+    setValidationError(null);
+  };
+
   const handleAddToCart = () => {
+    if (variants.length === 0) return;
+
+    if (!selectedColor) {
+      setValidationError('Vui lòng chọn màu sắc');
+      return;
+    }
+
+    if (!selectedSize) {
+      setValidationError('Vui lòng chọn kích thước');
+      return;
+    }
+
     if (!selectedVariant || selectedVariant.stock <= 0) return;
 
     onAddToCart(
@@ -349,19 +369,19 @@ export function ProductDetailPage({
               </div>
               <div className="flex gap-2 flex-wrap">
                 {SIZE_ORDER.map((size) => {
-                  const enabled = selectedColor ? sizesForSelectedColor.has(size) : false;
+                  const isOutOfStock = selectedColor ? !sizesForSelectedColor.has(size) : false;
                   return (
                     <button
                       key={size}
                       type="button"
-                      onClick={() => enabled && setSelectedSize(size)}
-                      disabled={!enabled}
+                      onClick={() => handleSizeSelect(size, isOutOfStock)}
+                      disabled={isOutOfStock}
                       aria-pressed={selectedSize === size}
                       className={`w-12 h-12 border text-sm font-semibold tracking-wider transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 ${
                         selectedSize === size
                           ? 'bg-neutral-900 text-white border-neutral-900'
                           : 'bg-white text-neutral-900 border-neutral-200 hover:border-neutral-900'
-                      } ${!enabled ? 'opacity-40 line-through cursor-not-allowed' : ''}`}
+                      } ${isOutOfStock ? 'opacity-40 line-through cursor-not-allowed' : ''}`}
                     >
                       {size}
                     </button>
@@ -400,19 +420,32 @@ export function ProductDetailPage({
             </div>
 
             <div className="space-y-3 pt-1">
+              <AnimatePresence>
+                {validationError && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-red-500 text-[11px] tracking-wider font-bold uppercase text-center"
+                  >
+                    {validationError}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={!selectedVariant || selectedVariant.stock <= 0}
-                className="w-full bg-neutral-900 text-white py-4 text-[11px] font-bold tracking-[0.28em] uppercase hover:bg-neutral-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                disabled={variants.length === 0 || (selectedVariant ? selectedVariant.stock <= 0 : false)}
+                className={`w-full text-white py-4 text-[11px] font-bold tracking-[0.28em] uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                  validationError ? 'bg-red-600 hover:bg-red-700' : 'bg-neutral-900 hover:bg-neutral-700'
+                }`}
               >
-                {!selectedColor
-                  ? 'CHON MAU SAC'
-                  : !selectedSize
-                    ? 'CHON KICH THUOC'
-                    : selectedVariant?.stock === 0
-                      ? 'HET HANG'
-                      : 'THEM VAO GIO HANG'}
+                {variants.length === 0
+                  ? 'SẢN PHẨM ĐANG CẬP NHẬT'
+                  : selectedVariant?.stock === 0
+                    ? 'HẾT HÀNG'
+                    : 'THÊM VÀO GIỎ HÀNG'}
               </button>
 
               <a
